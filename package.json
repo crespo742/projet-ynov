@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },  
   "repository": {
     "type": "git",
     "url": "git+https://github.com/crespo742/projet-ynov.git"
@@ -18,7 +20,18 @@
   },
   "homepage": "https://github.com/crespo742/projet-ynov#readme",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "gitignore": "^0.7.0"
+    "express": "^4.19.2",
+    "gitignore": "^0.7.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.8.0",
+    "mongoose": "^8.5.3",
+    "react-redux": "^9.1.2",
+    "redux": "^5.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
   }
 }
