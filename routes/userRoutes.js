@@ -1,7 +1,21 @@
 const express = require('express');
-const { registerUser } = require('../controllers/userController');
 const router = express.Router();
+const { register, login, getUser } = require('../controllers/userController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
-router.post('/register', registerUser);
+// @route   POST /api/users/register
+// @desc    Register user
+// @access  Public
+router.post('/register', register);
+
+// @route   POST /api/users/login
+// @desc    Login user
+// @access  Public
+router.post('/login', login);
+
+// @route   GET /api/users/user
+// @desc    Get logged in user
+// @access  Private
+router.get('/user', authMiddleware, getUser);
 
 module.exports = router;
