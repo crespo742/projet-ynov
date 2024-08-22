@@ -15,6 +15,11 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    motoAds: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'MotoAd',
+        default: [],  // Initialisation à un tableau vide par défaut
+      }],
 },{
   timestamps: true,
 });
