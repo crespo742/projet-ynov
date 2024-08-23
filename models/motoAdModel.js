@@ -29,6 +29,10 @@ const MotoAdSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  image: {
+    type: [String], // Un tableau pour stocker les URLs des images
+    required: false, // Pas obligatoire
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

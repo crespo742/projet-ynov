@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { createMotoAd, getMotoAds, getMotoAdById, updateMotoAd, deleteMotoAd, getUserMotoAds } = require('../controllers/motoAdController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const upload = require('../middlewares/uploadMiddleware');
 
 // Créer une annonce
-router.post('/create', authMiddleware, createMotoAd);
+router.post('/create', authMiddleware, upload.single('image'), createMotoAd);
 
 // Obtenir toutes les annonces
 router.get('/', getMotoAds);

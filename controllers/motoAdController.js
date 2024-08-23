@@ -4,22 +4,35 @@ const User = require('../models/userModel');
 // Créer une nouvelle annonce
 exports.createMotoAd = async (req, res) => {
     try {
+        const { title, description, price, brand, model, year, mileage } = req.body;
+        const imageUrl = req.file ? req.file.location : null;  // L'URL de l'image sur S3
+
         const motoAd = new MotoAd({
-            ...req.body,
+            title,
+            description,
+            price,
+            brand,
+            model,
+            year,
+            mileage,
+            image: imageUrl ? [imageUrl] : [],  // Stocke l'URL de l'image dans un tableau
             user: req.user.id,
         });
+
         const savedMotoAd = await motoAd.save();
 
-        // Ajouter l'annonce à la liste des annonces de l'utilisateur
+
         const user = await User.findById(req.user.id);
         user.motoAds.push(savedMotoAd._id);
         await user.save();
-
         res.status(201).json(savedMotoAd);
     } catch (error) {
+        console.error('Error creating ad:', error);
         res.status(500).json({ message: 'Failed to create the ad', error });
     }
 };
+
+
 
 // Obtenir toutes les annonces
 exports.getMotoAds = async (req, res) => {
