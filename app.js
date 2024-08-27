@@ -19,5 +19,8 @@ app.use('/api/users', userRoutes);
 const motoAdRoutes = require('./routes/motoAdRoutes');
 app.use('/api/moto-ads', motoAdRoutes);
 
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/api/admin', adminRoutes);
+
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

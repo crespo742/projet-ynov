@@ -15,6 +15,14 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    isModo: {
+        type: Boolean,
+        default: false,  // Par défaut, un utilisateur n'est pas modérateur
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false,  // Par défaut, un utilisateur n'est pas modérateur
+    },
     motoAds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'MotoAd',
