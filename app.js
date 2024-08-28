@@ -10,7 +10,6 @@ connectDB();
 const app = express();
 
 app.use(cors());
-
 app.use(express.json());
 
 const userRoutes = require('./routes/userRoutes');
@@ -21,6 +20,10 @@ app.use('/api/moto-ads', motoAdRoutes);
 
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
+
+// Ajout de la nouvelle route pour les paiements
+const paymentRoutes = require('./routes/paymentRoutes');
+app.use('/api/payment', paymentRoutes);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

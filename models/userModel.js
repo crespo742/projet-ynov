@@ -21,15 +21,19 @@ const UserSchema = new mongoose.Schema({
     },
     isAdmin: {
         type: Boolean,
-        default: false,  // Par défaut, un utilisateur n'est pas modérateur
+        default: false,  // Par défaut, un utilisateur n'est pas admin
     },
     motoAds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'MotoAd',
         default: [],  // Initialisation à un tableau vide par défaut
-      }],
-},{
-  timestamps: true,
+    }],
+    stripeCustomerId: {
+        type: String,
+        required: false, // Ce champ est facultatif, utilisé pour les paiements Stripe
+    },
+}, {
+    timestamps: true,
 });
 
 // Hash password before saving
