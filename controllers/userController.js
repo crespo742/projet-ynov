@@ -110,6 +110,21 @@ exports.getUserById = async (req, res) => {
     }
 };
 
+// Supprimer un utilisateur par ID
+exports.deleteUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        await User.deleteOne({ _id: req.params.id });
+        res.status(200).json({ message: 'User deleted successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete user', error });
+    }
+};
+
 // Définir un utilisateur comme modérateur
 exports.setModerator = async (req, res) => {
     try {
