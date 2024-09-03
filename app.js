@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
-const mongoose = require('mongoose');
+const { Server } = require('socket.io'); // Utilisation de socket.io pour WebSocket
 const dotenv = require('dotenv');
 const cors = require('cors');
 
@@ -14,7 +13,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3002",
+    origin: "http://localhost:3002", // Domaine du frontend
     methods: ["GET", "POST"],
   },
 });
@@ -42,9 +41,11 @@ app.use('/api/rentals', rentalRoutes);
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
+  // Écoute des messages envoyés par les utilisateurs
   socket.on('sendMessage', async (messageData) => {
     const { sender, receiver, content } = messageData;
 
+    // Sauvegarde du message dans MongoDB
     const message = new Message({
       sender,
       recipient: receiver,
@@ -53,6 +54,7 @@ io.on('connection', (socket) => {
 
     await message.save();
 
+    // Émet le message à l'utilisateur destinataire
     io.to(receiver).emit('receiveMessage', message);
   });
 
