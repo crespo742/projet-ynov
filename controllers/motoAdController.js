@@ -4,13 +4,13 @@ const User = require('../models/userModel');
 // Créer une nouvelle annonce
 exports.createMotoAd = async (req, res) => {
     try {
-        const { title, description, price, brand, model, year, mileage } = req.body;
+        const { title, description, pricePerDay, brand, model, year, mileage } = req.body; // Remplacer 'price' par 'pricePerDay'
         const imageUrl = req.file ? req.file.location : null;  // L'URL de l'image sur S3
 
         const motoAd = new MotoAd({
             title,
             description,
-            price,
+            pricePerDay,  // Utiliser 'pricePerDay' au lieu de 'price'
             brand,
             model,
             year,
@@ -21,7 +21,6 @@ exports.createMotoAd = async (req, res) => {
 
         const savedMotoAd = await motoAd.save();
 
-
         const user = await User.findById(req.user.id);
         user.motoAds.push(savedMotoAd._id);
         await user.save();
@@ -31,6 +30,7 @@ exports.createMotoAd = async (req, res) => {
         res.status(500).json({ message: 'Failed to create the ad', error });
     }
 };
+
 
 
 
@@ -70,7 +70,9 @@ exports.getMotoAdById = async (req, res) => {
 // Mettre à jour une annonce
 exports.updateMotoAd = async (req, res) => {
     try {
-        const motoAd = await MotoAd.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const { pricePerDay, ...updateData } = req.body; // Extraire 'pricePerDay' et le reste des données
+
+        const motoAd = await MotoAd.findByIdAndUpdate(req.params.id, { ...updateData, pricePerDay }, { new: true }); // Inclure 'pricePerDay' dans la mise à jour
         if (!motoAd) {
             return res.status(404).json({ message: 'Ad not found' });
         }
@@ -79,6 +81,7 @@ exports.updateMotoAd = async (req, res) => {
         res.status(500).json({ message: 'Failed to update the ad', error });
     }
 };
+
 
 // Supprimer une annonce
 exports.deleteMotoAd = async (req, res) => {

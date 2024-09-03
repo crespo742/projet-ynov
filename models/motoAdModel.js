@@ -9,9 +9,9 @@ const MotoAdSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  price: {
+  pricePerDay: {
     type: Number,
-    required: true,
+    required: true, // Ce champ est requis pour calculer le coût de location
   },
   brand: {
     type: String,
@@ -30,8 +30,8 @@ const MotoAdSchema = new mongoose.Schema({
     required: true,
   },
   image: {
-    type: [String], // Un tableau pour stocker les URLs des images
-    required: false, // Pas obligatoire
+    type: [String], 
+    required: false, 
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
