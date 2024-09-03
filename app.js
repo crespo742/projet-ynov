@@ -1,29 +1,66 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io'); // Utilisation de socket.io pour WebSocket
+const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const connectDB = require('./config/database');
 const cors = require('cors');
 
 dotenv.config();
 
+const connectDB = require('./config/database');
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3002", // Domaine du frontend
+    methods: ["GET", "POST"],
+  },
+});
 
 app.use(cors());
 app.use(express.json());
 
+// Importation des routes
 const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes);
-
 const motoAdRoutes = require('./routes/motoAdRoutes');
-app.use('/api/moto-ads', motoAdRoutes);
-
 const adminRoutes = require('./routes/adminRoutes');
-app.use('/api/admin', adminRoutes);
-
-// Ajout de la nouvelle route pour les paiements
+const messageRoutes = require('./routes/messageRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-app.use('/api/payment', paymentRoutes);
 
-const PORT = process.env.PORT;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Utilisation des routes
+app.use('/api/users', userRoutes);
+app.use('/api/moto-ads', motoAdRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/messages', messageRoutes); // Ajoutez cette ligne
+
+// Gestion des connexions WebSocket
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Écoute des messages envoyés par les utilisateurs
+  socket.on('sendMessage', async (messageData) => {
+    const { sender, receiver, content } = messageData;
+
+    // Sauvegarde du message dans MongoDB
+    const message = new Message({
+      sender,
+      recipient: receiver,  // Remplacez "receiver" par "recipient" pour correspondre à votre schéma
+      content,
+    });
+
+    await message.save();
+
+    // Émet le message à l'utilisateur destinataire
+    io.to(receiver).emit('receiveMessage', message);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('A user disconnected:', socket.id);
+  });
+});
+
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
