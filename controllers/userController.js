@@ -19,30 +19,20 @@ exports.register = async (req, res) => {
 
         await user.save();
 
-        const payload = {
-            user: {
-                id: user.id,
-            },
-        };
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: '1d',
+        });
 
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '1d' },
-            (err, token) => {
-                if (err) throw err;
-                res.json({
-                    token,
-                    user: {
-                        id: user.id,
-                        name: user.name,
-                        email: user.email,
-                        isModo: user.isModo,
-                        isAdmin: user.isAdmin,
-                    }
-                });
-            }
-        );
+        res.status(200).json({
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                isModo: user.isModo,
+                isAdmin: user.isAdmin,
+            },
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
