@@ -1,6 +1,7 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/sendEmail');
 
 exports.register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -22,6 +23,12 @@ exports.register = async (req, res) => {
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
             expiresIn: '1d',
         });
+
+        // Envoyer l'e-mail de bienvenue
+        const subject = 'Bienvenue sur notre plateforme !';
+        const message = `Bonjour ${user.name},\n\nMerci de vous être inscrit sur notre plateforme. Nous espérons que vous apprécierez notre service.\n\nCordialement,\nL'équipe`;
+
+        sendEmail(user.email, subject, message);
 
         res.status(200).json({
             token,

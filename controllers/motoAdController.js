@@ -1,5 +1,6 @@
 const MotoAd = require('../models/motoAdModel');
 const User = require('../models/userModel');
+const sendEmail = require('../utils/sendEmail');
 
 // Créer une nouvelle annonce
 exports.createMotoAd = async (req, res) => {
@@ -20,6 +21,8 @@ exports.createMotoAd = async (req, res) => {
         });
 
         const savedMotoAd = await motoAd.save();
+        // Envoyer un e-mail de confirmation
+        sendEmail(req.user.email, 'Confirmation de publication d\'annonce', `Votre annonce "${title}" a été publiée avec succès !`);
 
         const user = await User.findById(req.user.id);
         user.motoAds.push(savedMotoAd._id);

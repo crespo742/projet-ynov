@@ -1,5 +1,7 @@
 const Message = require('../models/messageModel');
 const mongoose = require('mongoose');
+const sendEmail = require('../utils/sendEmail');
+const User = require('../models/userModel');
 
 // Envoyer un message
 exports.sendMessage = async (req, res) => {
@@ -14,8 +16,12 @@ exports.sendMessage = async (req, res) => {
 
         await message.save();
 
+        // Envoyer un e-mail à l'utilisateur destinataire
+        const recipientUser = await User.findById(recipient);
+        sendEmail(recipientUser.email, 'Nouveau message reçu', `Vous avez reçu un nouveau message de ${req.user.name}: "${content}"`);
+
         res.status(201).json(message);
-    } catch (error) {
+    } catch (error) {        
         res.status(500).json({ message: 'Failed to send message', error });
     }
 };
