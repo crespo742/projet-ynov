@@ -42,6 +42,12 @@ const MotoAdSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  reservedDates: [
+    {
+      startDate: Date,
+      endDate: Date,
+    },
+  ],
 });
 
 module.exports = mongoose.model('MotoAd', MotoAdSchema);

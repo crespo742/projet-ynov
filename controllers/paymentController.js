@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 
 // Créer une session de paiement pour la location d'une moto
 exports.createRentalCheckoutSession = async (req, res) => {
-  const { motoAdId, days } = req.body;
+  const { motoAdId, startDate, endDate } = req.body;
 
   console.log('Requête reçue:', req.body); // Vérification de la requête reçue
   console.log('ID de l\'annonce reçu:', motoAdId);
@@ -22,7 +22,20 @@ exports.createRentalCheckoutSession = async (req, res) => {
       return res.status(404).send({ message: 'Annonce de moto non trouvée.' });
     }
 
+    // Vérifier la disponibilité des dates
+    const isDateReserved = motoAd.reservedDates.some((dateRange) => {
+      return (
+        (new Date(startDate) <= dateRange.endDate && new Date(startDate) >= dateRange.startDate) ||
+        (new Date(endDate) <= dateRange.endDate && new Date(endDate) >= dateRange.startDate)
+      );
+    });
+
+    if (isDateReserved) {
+      return res.status(400).json({ message: 'Ces dates sont déjà réservées.' });
+    }
+
     // Calculer le montant total
+    const days = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24) + 1; // Calcul des jours
     const amount = motoAd.pricePerDay * days;
 
     // Créer une session de paiement Stripe avec `price_data`
@@ -45,12 +58,18 @@ exports.createRentalCheckoutSession = async (req, res) => {
       cancel_url: 'http://localhost:3002',
     });
 
+    // Ajouter les dates réservées après la création de la session
+    motoAd.reservedDates.push({ startDate: new Date(startDate), endDate: new Date(endDate) });
+    await motoAd.save();
+
     res.status(200).json({ sessionId: session.id, url: session.url });
   } catch (error) {
     console.error('Erreur lors de la création de la session de paiement:', error);
     res.status(500).send({ message: 'Erreur lors de la création de la session de paiement', error: error.message });
   }
 };
+
+
 
 
 
