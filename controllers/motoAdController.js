@@ -98,3 +98,46 @@ exports.deleteMotoAd = async (req, res) => {
         res.status(500).json({ message: 'Failed to delete the ad', error });
     }
 };
+
+//filtres -->
+
+// controllers/motoAdController.js
+exports.getFilteredMotoAds = async (req, res) => {
+    try {
+        const { brand, year, minPrice, maxPrice, search } = req.query;
+
+        const filters = {};
+
+        // Filtrer par marque
+        if (brand) {
+            filters.brand = brand;
+        }
+
+        // Filtrer par année
+        if (year) {
+            filters.year = year;
+        }
+
+        // Filtrer par prix
+        if (minPrice || maxPrice) {
+            filters.pricePerDay = {};  // Utiliser pricePerDay pour le filtre des prix
+            if (minPrice) {
+                filters.pricePerDay.$gte = parseFloat(minPrice);  // Prix minimum
+            }
+            if (maxPrice) {
+                filters.pricePerDay.$lte = parseFloat(maxPrice);  // Prix maximum
+            }
+        }
+
+        // Recherche par titre avec insensibilité à la casse
+        if (search) {
+            filters.title = { $regex: search, $options: 'i' };
+        }
+
+        // Trouver les annonces avec les filtres appliqués
+        const motoAds = await MotoAd.find(filters);
+        res.status(200).json(motoAds);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch moto ads', error });
+    }
+};
