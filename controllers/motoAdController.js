@@ -5,23 +5,24 @@ const sendEmail = require('../utils/sendEmail');
 // Créer une nouvelle annonce
 exports.createMotoAd = async (req, res) => {
     try {
-        const { title, description, pricePerDay, brand, model, year, mileage } = req.body; // Remplacer 'price' par 'pricePerDay'
-        const imageUrl = req.file ? req.file.location : null;  // L'URL de l'image sur S3
+        const { title, description, pricePerDay, brand, model, year, mileage, location } = req.body;
+        const imageUrl = req.file ? req.file.location : null;
 
         const motoAd = new MotoAd({
             title,
             description,
-            pricePerDay,  // Utiliser 'pricePerDay' au lieu de 'price'
+            pricePerDay,
             brand,
             model,
             year,
             mileage,
-            image: imageUrl ? [imageUrl] : [],  // Stocke l'URL de l'image dans un tableau
+            location,  // Localisation ajoutée ici
+            image: imageUrl ? [imageUrl] : [],
             user: req.user.id,
         });
 
         const savedMotoAd = await motoAd.save();
-        // Envoyer un e-mail de confirmation
+
         sendEmail(req.user.email, 'Confirmation de publication d\'annonce', `Votre annonce "${title}" a été publiée avec succès !`);
 
         const user = await User.findById(req.user.id);
@@ -104,40 +105,40 @@ exports.deleteMotoAd = async (req, res) => {
 // controllers/motoAdController.js
 exports.getFilteredMotoAds = async (req, res) => {
     try {
-        const { brand, year, minPrice, maxPrice, search } = req.query;
-
-        const filters = {};
-
-        // Filtrer par marque
-        if (brand) {
-            filters.brand = brand;
+      const { brand, year, minPrice, maxPrice, search, location } = req.query;
+  
+      const filters = {};
+  
+      if (brand) {
+        filters.brand = brand;
+      }
+  
+      if (year) {
+        filters.year = year;
+      }
+  
+      if (minPrice || maxPrice) {
+        filters.pricePerDay = {};
+        if (minPrice) {
+          filters.pricePerDay.$gte = minPrice;
         }
-
-        // Filtrer par année
-        if (year) {
-            filters.year = year;
+        if (maxPrice) {
+          filters.pricePerDay.$lte = maxPrice;
         }
-
-        // Filtrer par prix
-        if (minPrice || maxPrice) {
-            filters.pricePerDay = {};  // Utiliser pricePerDay pour le filtre des prix
-            if (minPrice) {
-                filters.pricePerDay.$gte = parseFloat(minPrice);  // Prix minimum
-            }
-            if (maxPrice) {
-                filters.pricePerDay.$lte = parseFloat(maxPrice);  // Prix maximum
-            }
-        }
-
-        // Recherche par titre avec insensibilité à la casse
-        if (search) {
-            filters.title = { $regex: search, $options: 'i' };
-        }
-
-        // Trouver les annonces avec les filtres appliqués
-        const motoAds = await MotoAd.find(filters);
-        res.status(200).json(motoAds);
+      }
+  
+      if (search) {
+        filters.title = { $regex: search, $options: 'i' };
+      }
+  
+      if (location) {
+        filters.location = { $regex: location, $options: 'i' }; // Recherche insensible à la casse
+      }
+  
+      const motoAds = await MotoAd.find(filters);
+      res.status(200).json(motoAds);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to fetch moto ads', error });
+      res.status(500).json({ message: 'Failed to fetch moto ads', error });
     }
-};
+  };
+  

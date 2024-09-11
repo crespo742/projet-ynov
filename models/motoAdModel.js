@@ -33,6 +33,10 @@ const MotoAdSchema = new mongoose.Schema({
     type: [String], 
     required: false, 
   },
+  location: {
+    type: String, // Ce champ va contenir la ville sélectionnée par l'utilisateur
+    required: true,
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
