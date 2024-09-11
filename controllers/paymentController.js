@@ -2,6 +2,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const User = require('../models/userModel');
 const MotoAd = require('../models/motoAdModel');
 const mongoose = require('mongoose');
+const sendEmail = require('../utils/sendEmail');
 
 // Créer une session de paiement pour la location d'une moto
 exports.createRentalCheckoutSession = async (req, res) => {
@@ -62,12 +63,20 @@ exports.createRentalCheckoutSession = async (req, res) => {
     motoAd.reservedDates.push({ startDate: new Date(startDate), endDate: new Date(endDate) });
     await motoAd.save();
 
+    // Envoyer un e-mail de confirmation à l'utilisateur
+    await sendEmail(
+      req.user.email,
+      'Confirmation de location de moto',
+      `Votre location de la moto "${motoAd.title}" a été confirmée pour la période du ${startDate} au ${endDate}.`
+    );
+
     res.status(200).json({ sessionId: session.id, url: session.url });
   } catch (error) {
     console.error('Erreur lors de la création de la session de paiement:', error);
     res.status(500).send({ message: 'Erreur lors de la création de la session de paiement', error: error.message });
   }
 };
+
 
 
 
