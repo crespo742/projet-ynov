@@ -21,7 +21,7 @@ exports.sendMessage = async (req, res) => {
         sendEmail(recipientUser.email, 'Nouveau message reçu', `Vous avez reçu un nouveau message de ${req.user.name}: "${content}"`);
 
         res.status(201).json(message);
-    } catch (error) {        
+    } catch (error) {
         res.status(500).json({ message: 'Failed to send message', error });
     }
 };
@@ -43,8 +43,8 @@ exports.getConversations = async (req, res) => {
             },
             {
                 $group: {
-                    _id: { 
-                        $cond: { 
+                    _id: {
+                        $cond: {
                             if: { $lt: ["$sender", "$recipient"] },
                             then: ["$sender", "$recipient"],
                             else: ["$recipient", "$sender"]
@@ -61,11 +61,26 @@ exports.getConversations = async (req, res) => {
                 }
             }
         ]);
-        res.status(200).json(conversations);
+
+        // Récupérer les détails des participants avec populate
+        const populatedConversations = await Promise.all(conversations.map(async (conversation) => {
+            const [participant1Id, participant2Id] = conversation.participants;
+
+            const participant1 = await User.findById(participant1Id).select('name email');
+            const participant2 = await User.findById(participant2Id).select('name email');
+
+            return {
+                participants: [participant1, participant2],
+                latestMessage: conversation.latestMessage,
+            };
+        }));
+
+        res.status(200).json(populatedConversations);
     } catch (error) {
         res.status(500).json({ message: 'Failed to fetch conversations', error });
     }
 };
+
 
 // Récupérer les messages d'une conversation
 exports.getMessages = async (req, res) => {
@@ -78,7 +93,7 @@ exports.getMessages = async (req, res) => {
                 { sender: userId, recipient: req.user.id }
             ]
         }).sort({ timestamp: 1 })
-        .populate('sender', 'name');
+            .populate('sender', 'name');
 
         res.status(200).json(messages);
     } catch (error) {
