@@ -1,7 +1,7 @@
 // routes/messageRoutes.js
 const express = require('express');
 const authMiddleware = require('../middlewares/authMiddleware');
-const { sendMessage, getMessages, getConversations } = require('../controllers/messageController');
+const { sendMessage, getMessages, getConversations, getUnreadMessagesCount, markMessageAsRead } = require('../controllers/messageController');
 
 const router = express.Router();
 
@@ -10,6 +10,12 @@ router.post('/send', authMiddleware, sendMessage);
 
 // Route pour obtenir toutes les conversations de l'utilisateur connecté
 router.get('/conversations', authMiddleware, getConversations);
+
+// Route pour obtenir le nombre de messages non lus
+router.get('/unread-count', authMiddleware, getUnreadMessagesCount);
+
+// Route pour marquer un message comme lu
+router.put('/mark-as-read/:messageId', authMiddleware, markMessageAsRead);
 
 // Route pour récupérer les messages d'une conversation
 router.get('/:userId', authMiddleware, getMessages);

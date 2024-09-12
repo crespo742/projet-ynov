@@ -15,6 +15,10 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    isRead: {
+        type: Boolean,
+        default: false, // Par défaut, un message n'est pas lu
+    },
     timestamp: {
         type: Date,
         default: Date.now,

@@ -81,6 +81,37 @@ exports.getConversations = async (req, res) => {
     }
 };
 
+exports.getUnreadMessagesCount = async (req, res) => {
+    try {
+        const unreadCount = await Message.countDocuments({
+            recipient: req.user.id,
+            isRead: false,
+        });
+
+        res.status(200).json({ unreadCount });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch unread messages count', error });
+    }
+};
+
+exports.markMessageAsRead = async (req, res) => {
+    try {
+        const { messageId } = req.params;
+
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ message: 'Message not found' });
+        }
+
+        message.isRead = true;
+        await message.save();
+
+        res.status(200).json({ message: 'Message marked as read' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to mark message as read', error });
+    }
+};
+
 
 // Récupérer les messages d'une conversation
 exports.getMessages = async (req, res) => {
