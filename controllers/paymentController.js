@@ -3,14 +3,12 @@ const User = require('../models/userModel');
 const MotoAd = require('../models/motoAdModel');
 const Rental = require('../models/rentalModel');
 const mongoose = require('mongoose');
-const sendEmail = require('../utils/sendEmail');
+const { createPdfContract } = require('../utils/pdfGenerator');
+const { sendEmailWithAttachment } = require('../utils/emailUtils');
 
 // Créer une session de paiement pour la location d'une moto
 exports.createRentalCheckoutSession = async (req, res) => {
   const { motoAdId, startDate, endDate } = req.body;
-
-  console.log('Requête reçue:', req.body); // Vérification de la requête reçue
-  console.log('ID de l\'annonce reçu:', motoAdId);
 
   try {
     // Vérifie si l'ID est valide
@@ -18,7 +16,6 @@ exports.createRentalCheckoutSession = async (req, res) => {
       return res.status(400).send({ message: 'ID invalide ou manquant.' });
     }
 
-    // Recherche l'annonce de moto avec l'ID
     const motoAd = await MotoAd.findById(motoAdId);
     if (!motoAd) {
       return res.status(404).send({ message: 'Annonce de moto non trouvée.' });
@@ -38,16 +35,16 @@ exports.createRentalCheckoutSession = async (req, res) => {
     }
 
     // Calculer le montant total de la location
-    const days = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24) + 1; // Inclure le premier jour
+    const days = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24) + 1;
     const amount = motoAd.pricePerDay * days;
-    const depositAmount = motoAd.deposit || 100; // Définir la caution par défaut à 100 si non spécifiée
+    const depositAmount = motoAd.deposit || 100;
 
     // Créer une intention de paiement avec Stripe pour la caution
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(depositAmount * 100), // Montant de la caution en centimes
+      amount: Math.round(depositAmount * 100),
       currency: 'eur',
       payment_method_types: ['card'],
-      capture_method: 'manual', // Autorisation manuelle pour la caution
+      capture_method: 'manual',
     });
 
     // Créer une session de paiement Stripe pour le reste de la location
@@ -61,7 +58,7 @@ exports.createRentalCheckoutSession = async (req, res) => {
             name: motoAd.title,
             description: `Location de ${motoAd.title} pour ${days} jour(s)`,
           },
-          unit_amount: Math.round(amount * 100), // Montant en centimes
+          unit_amount: Math.round(amount * 100),
         },
         quantity: 1,
       }],
@@ -70,11 +67,11 @@ exports.createRentalCheckoutSession = async (req, res) => {
       cancel_url: 'http://localhost:3002',
     });
 
-    // Ajouter les dates réservées après la création de la session
+    // Ajouter les dates réservées
     motoAd.reservedDates.push({ startDate: new Date(startDate), endDate: new Date(endDate) });
     await motoAd.save();
 
-    // Sauvegarder la réservation avec l'autorisation de caution
+    // Sauvegarder la réservation
     const newRental = new Rental({
       motoAdId,
       userId: req.user._id,
@@ -82,15 +79,19 @@ exports.createRentalCheckoutSession = async (req, res) => {
       endDate: new Date(endDate),
       amount,
       deposit: depositAmount,
-      paymentIntentId: paymentIntent.id, // Sauvegarder l'ID de l'intention de paiement
+      paymentIntentId: paymentIntent.id,
     });
     await newRental.save();
 
-    // Envoyer un e-mail de confirmation à l'utilisateur
-    await sendEmail(
+    // Générer le PDF en mémoire
+    const pdfBuffer = await createPdfContract(motoAd, req.user, startDate, endDate);
+
+    // Envoyer le PDF par e-mail avec une pièce jointe
+    await sendEmailWithAttachment(
       req.user.email,
       'Confirmation de location de moto',
-      `Votre location de la moto "${motoAd.title}" a été confirmée pour la période du ${startDate} au ${endDate}.`
+      `Votre location de la moto "${motoAd.title}" a été confirmée pour la période du ${startDate} au ${endDate}.`,
+      pdfBuffer
     );
 
     res.status(200).json({ sessionId: session.id, url: session.url, clientSecret: paymentIntent.client_secret });
