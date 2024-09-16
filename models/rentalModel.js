@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const rentalSchema = new mongoose.Schema({
   motoAdId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'MotoAd', // Référence à l'annonce de moto
+    ref: 'MotoAd',
     required: true,
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // Référence à l'utilisateur qui réserve
+    ref: 'User',
     required: true,
   },
   startDate: {
@@ -17,6 +17,18 @@ const rentalSchema = new mongoose.Schema({
   },
   endDate: {
     type: Date,
+    required: true,
+  },
+  paymentIntentId: {
+    type: String,
+    required: true,
+  },
+  amount: {
+    type: Number,
+    required: true,
+  },
+  deposit: {
+    type: Number,
     required: true,
   },
   createdAt: {

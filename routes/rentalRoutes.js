@@ -1,29 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const Rental = require('../models/rentalModel'); // Import du modèle Rental
+const rentalController = require('../controllers/rentalController'); // Import du contrôleur des réservations
 
 // Route pour récupérer les dates indisponibles pour une moto spécifique
-router.get('/unavailable-dates/:motoAdId', async (req, res) => {
-  const { motoAdId } = req.params;
+router.get('/unavailable-dates/:motoAdId', rentalController.getUnavailableDates);
 
-  try {
-    const rentals = await Rental.find({ motoAdId });
+// Route pour créer une nouvelle réservation
+router.post('/create', rentalController.createRental);
 
-    // Obtenir toutes les dates réservées
-    const dates = rentals.flatMap(rental => {
-      const datesArray = [];
-      let currentDate = new Date(rental.startDate);
-      while (currentDate <= new Date(rental.endDate)) {
-        datesArray.push(new Date(currentDate));
-        currentDate.setDate(currentDate.getDate() + 1); // Ajoute un jour
-      }
-      return datesArray;
-    });
+// Route pour capturer le paiement à la fin de la location
+router.post('/capture-payment', rentalController.capturePayment);
 
-    res.json(dates);
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la récupération des dates indisponibles.', error: error.message });
-  }
-});
+// Route pour annuler le paiement à la fin de la location
+router.post('/cancel-payment', rentalController.cancelPayment);
+
+// Route pour récupérer toutes les réservations d'un propriétaire
+router.get('/owner/:ownerId', rentalController.getRentalsByOwner);
+
+// Route pour récupérer toutes les réservations d'un utilisateur
+router.get('/user/:userId', rentalController.getRentalsByUser);
+
 
 module.exports = router;
