@@ -71,18 +71,36 @@ exports.getMotoAdById = async (req, res) => {
     }
 };
 
-// Mettre à jour une annonce
+// Modifier une annonce
 exports.updateMotoAd = async (req, res) => {
     try {
-        const { pricePerDay, ...updateData } = req.body; // Extraire 'pricePerDay' et le reste des données
+        const { title, description, pricePerDay, brand, model, year, mileage, location } = req.body;
 
-        const motoAd = await MotoAd.findByIdAndUpdate(req.params.id, { ...updateData, pricePerDay }, { new: true }); // Inclure 'pricePerDay' dans la mise à jour
-        if (!motoAd) {
-            return res.status(404).json({ message: 'Ad not found' });
+        const ad = await MotoAd.findById(req.params.id);
+
+        if (!ad) {
+            return res.status(404).json({ message: 'Annonce non trouvée' });
         }
-        res.status(200).json(motoAd);
+
+        // Vérifier si l'utilisateur connecté est le propriétaire de l'annonce
+        if (ad.user.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Vous n\'êtes pas autorisé à modifier cette annonce' });
+        }
+
+        // Mettre à jour les champs
+        ad.title = title || ad.title;
+        ad.description = description || ad.description;
+        ad.pricePerDay = pricePerDay || ad.pricePerDay;
+        ad.brand = brand || ad.brand;
+        ad.model = model || ad.model;
+        ad.year = year || ad.year;
+        ad.mileage = mileage || ad.mileage;
+        ad.location = location || ad.location;
+
+        const updatedAd = await ad.save();
+        res.status(200).json(updatedAd);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to update the ad', error });
+        res.status(500).json({ message: 'Échec de la mise à jour de l\'annonce', error });
     }
 };
 
@@ -90,55 +108,68 @@ exports.updateMotoAd = async (req, res) => {
 // Supprimer une annonce
 exports.deleteMotoAd = async (req, res) => {
     try {
-        const motoAd = await MotoAd.findByIdAndDelete(req.params.id);
-        if (!motoAd) {
-            return res.status(404).json({ message: 'Ad not found' });
+        const adId = req.params.id;
+        const ad = await MotoAd.findById(adId);
+
+        if (!ad) {
+            return res.status(404).json({ message: 'Annonce non trouvée' });
         }
-        res.status(200).json({ message: 'Ad deleted successfully' });
+
+        // Vérifier si l'utilisateur connecté est le propriétaire de l'annonce
+        if (ad.user.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Vous n\'êtes pas autorisé à supprimer cette annonce' });
+        }
+
+        // Utiliser findByIdAndDelete pour supprimer l'annonce
+        await MotoAd.findByIdAndDelete(adId);
+        res.status(200).json({ message: 'Annonce supprimée avec succès' });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to delete the ad', error });
+        console.log(error);
+
+        res.status(500).json({ message: 'Échec de la suppression de l\'annonce', error });
     }
 };
+
 
 //filtres -->
 
 // controllers/motoAdController.js
 exports.getFilteredMotoAds = async (req, res) => {
     try {
-      const { brand, year, minPrice, maxPrice, search, location } = req.query;
-  
-      const filters = {};
-  
-      if (brand) {
-        filters.brand = brand;
-      }
-  
-      if (year) {
-        filters.year = year;
-      }
-  
-      if (minPrice || maxPrice) {
-        filters.pricePerDay = {};
-        if (minPrice) {
-          filters.pricePerDay.$gte = minPrice;
+        const { brand, year, minPrice, maxPrice, search, location } = req.query;
+
+        const filters = {};
+
+        if (brand) {
+            filters.brand = brand;
         }
-        if (maxPrice) {
-          filters.pricePerDay.$lte = maxPrice;
+
+        if (year) {
+            filters.year = year;
         }
-      }
-  
-      if (search) {
-        filters.title = { $regex: search, $options: 'i' };
-      }
-  
-      if (location) {
-        filters.location = { $regex: location, $options: 'i' }; // Recherche insensible à la casse
-      }
-  
-      const motoAds = await MotoAd.find(filters);
-      res.status(200).json(motoAds);
+
+        if (minPrice || maxPrice) {
+            filters.pricePerDay = {};
+            if (minPrice) {
+                filters.pricePerDay.$gte = minPrice;
+            }
+            if (maxPrice) {
+                filters.pricePerDay.$lte = maxPrice;
+            }
+        }
+
+        if (search) {
+            filters.title = { $regex: search, $options: 'i' };
+        }
+
+        if (location) {
+            filters.location = { $regex: location, $options: 'i' }; // Recherche insensible à la casse
+        }
+
+        const motoAds = await MotoAd.find(filters);
+        res.status(200).json(motoAds);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to fetch moto ads', error });
+        res.status(500).json({ message: 'Failed to fetch moto ads', error });
     }
-  };
-  
+};
+

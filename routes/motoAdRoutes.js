@@ -13,11 +13,11 @@ router.get('/', getMotoAds);
 // Obtenir toutes les annonces
 router.get('/filter', getFilteredMotoAds);
 
-// Obtenir les annonces de motos de l'utilisateur connecté
-router.get('/my-ads', authMiddleware, getUserMotoAds);
-
 // Obtenir une annonce par ID
 router.get('/:id', getMotoAdById);
+
+// Obtenir les annonces de motos de l'utilisateur connecté
+router.get('/my-ads', authMiddleware, getUserMotoAds);
 
 // Mettre à jour une annonce
 router.put('/:id', authMiddleware, updateMotoAd);

@@ -1,4 +1,5 @@
 const User = require('../models/userModel');
+const MotoAd = require('../models/motoAdModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
@@ -151,3 +152,18 @@ exports.getUserProfile = async (req, res) => {
         res.status(500).json({ message: 'Failed to fetch user profile', error });
     }
 };
+
+exports.getUserProfile = async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+      const motoAds = await MotoAd.find({ user: req.user.id });
+  
+      if (!user) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      }
+  
+      res.status(200).json({ user, motoAds });
+    } catch (error) {
+      res.status(500).json({ message: 'Erreur lors de la récupération du profil utilisateur', error });
+    }
+  };
