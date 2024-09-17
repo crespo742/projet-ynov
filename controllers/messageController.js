@@ -94,24 +94,22 @@ exports.getUnreadMessagesCount = async (req, res) => {
     }
 };
 
-exports.markMessageAsRead = async (req, res) => {
+// Marquer plusieurs messages comme lus
+exports.markMessagesAsRead = async (req, res) => {
     try {
-        const { messageId } = req.params;
+        const { messageIds } = req.body; // Recevoir un tableau d'IDs de messages
 
-        const message = await Message.findById(messageId);
-        if (!message) {
-            return res.status(404).json({ message: 'Message not found' });
-        }
+        // Marquer les messages comme lus
+        await Message.updateMany(
+            { _id: { $in: messageIds }, recipient: req.user.id },
+            { $set: { isRead: true } }
+        );
 
-        message.isRead = true;
-        await message.save();
-
-        res.status(200).json({ message: 'Message marked as read' });
+        res.status(200).json({ message: 'Messages marked as read' });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to mark message as read', error });
+        res.status(500).json({ message: 'Failed to mark messages as read', error });
     }
 };
-
 
 // Récupérer les messages d'une conversation
 exports.getMessages = async (req, res) => {
@@ -124,7 +122,8 @@ exports.getMessages = async (req, res) => {
                 { sender: userId, recipient: req.user.id }
             ]
         }).sort({ timestamp: 1 })
-            .populate('sender', 'name');
+            .populate('sender', 'name')
+            .populate('recipient', 'name');
 
         res.status(200).json(messages);
     } catch (error) {
