@@ -38,15 +38,20 @@ exports.createMotoAd = async (req, res) => {
 
 
 
-// Obtenir toutes les annonces
+// Obtenir toutes les annonces, triées par date de création (les plus récentes en premier)
 exports.getMotoAds = async (req, res) => {
     try {
-        const motoAds = await MotoAd.find().populate('user', 'name email');
+        // Tri des annonces par 'createdAt' en ordre décroissant (-1)
+        const motoAds = await MotoAd.find()
+            .populate('user', 'name email')
+            .sort({ createdAt: -1 }); // -1 signifie décroissant
+
         res.status(200).json(motoAds);
     } catch (error) {
         res.status(500).json({ message: 'Failed to fetch ads', error });
     }
 };
+
 
 // Obtenir toutes les annonces d'un utilisateur spécifique
 exports.getUserMotoAds = async (req, res) => {
