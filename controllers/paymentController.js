@@ -177,35 +177,6 @@ exports.checkUserSubscription = async (req, res) => {
   }
 };
 
-// Créer une session de paiement pour un abonnement
-exports.createCheckoutSession = async (req, res) => {
-  const { email, priceId } = req.body;
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).send({ message: 'Utilisateur non trouvé.' });
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      customer_email: email,
-      line_items: [{
-        price: priceId,
-        quantity: 1,
-      }],
-      mode: 'subscription',
-      success_url: 'http://localhost:3000/chat?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'http://localhost:3000/cancel',
-    });
-
-    res.status(200).json({ sessionId: session.id, url: session.url });
-  } catch (error) {
-    console.error('Erreur lors de la création de la session de paiement:', error);
-    res.status(500).send({ message: 'Erreur lors de la création de la session de paiement', error: error.message });
-  }
-};
-
 // Annuler un abonnement par email
 exports.cancelSubscriptionByEmail = async (req, res) => {
   const { email } = req.body;
