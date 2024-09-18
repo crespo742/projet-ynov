@@ -34,20 +34,12 @@ exports.createRentalCheckoutSession = async (req, res) => {
       return res.status(400).json({ message: 'Ces dates sont déjà réservées.' });
     }
 
-    // Calculer le montant total de la location
+    // Calculer le montant total de la location et de la caution
     const days = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24) + 1;
     const amount = motoAd.pricePerDay * days;
-    const depositAmount = motoAd.deposit || 100;
+    const depositAmount = 1000;  // Caution fixée à 1000 €
 
-    // Créer une intention de paiement avec Stripe pour la caution
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(depositAmount * 100),
-      currency: 'eur',
-      payment_method_types: ['card'],
-      capture_method: 'manual',
-    });
-
-    // Créer une session de paiement Stripe pour le reste de la location
+    // Créer une session de paiement Stripe pour la location + caution
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer_email: req.user.email,
@@ -56,22 +48,22 @@ exports.createRentalCheckoutSession = async (req, res) => {
           currency: 'eur',
           product_data: {
             name: motoAd.title,
-            description: `Location de ${motoAd.title} pour ${days} jour(s)`,
+            description: `Location de ${motoAd.title} pour ${days} jour(s) + caution de ${depositAmount}€`,
           },
-          unit_amount: Math.round(amount * 100),
+          unit_amount: Math.round((amount + depositAmount) * 100), // Montant total en centimes
         },
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: process.env.NEXT_PUBLIC_FRONT_BASE_URL,
-      cancel_url: process.env.NEXT_PUBLIC_FRONT_BASE_URL,
+      success_url: `${process.env.NEXT_PUBLIC_FRONT_BASE_URL}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_FRONT_BASE_URL}`,
     });
 
     // Ajouter les dates réservées
     motoAd.reservedDates.push({ startDate: new Date(startDate), endDate: new Date(endDate) });
     await motoAd.save();
 
-    // Sauvegarder la réservation
+    // Sauvegarder la réservation avec sessionId
     const newRental = new Rental({
       motoAdId,
       userId: req.user._id,
@@ -79,7 +71,7 @@ exports.createRentalCheckoutSession = async (req, res) => {
       endDate: new Date(endDate),
       amount,
       deposit: depositAmount,
-      paymentIntentId: paymentIntent.id,
+      sessionId: session.id,  // On enregistre le session ID Stripe
     });
     await newRental.save();
 
@@ -94,38 +86,46 @@ exports.createRentalCheckoutSession = async (req, res) => {
       pdfBuffer
     );
 
-    res.status(200).json({ sessionId: session.id, url: session.url, clientSecret: paymentIntent.client_secret });
+    res.status(200).json({ sessionId: session.id, url: session.url });
   } catch (error) {
     console.error('Erreur lors de la création de la session de paiement:', error);
     res.status(500).send({ message: 'Erreur lors de la création de la session de paiement', error: error.message });
   }
 };
 
+
+
 // Rembourser la caution
 exports.refundDeposit = async (req, res) => {
-  const { paymentSessionId, deposit } = req.body;
+  const { sessionId, refundAmount } = req.body;
 
   try {
-    // Trouver la réservation associée
-    const rental = await Rental.findOne({ paymentSessionId });
-
+    // Rechercher la réservation
+    const rental = await Rental.findOne({ sessionId });
     if (!rental) {
       return res.status(404).json({ message: 'Réservation non trouvée.' });
     }
 
-    // Rembourser le montant de la caution
+    // Récupérer la session de paiement Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    // Vérifier que la session contient un `payment_intent`
+    if (!session.payment_intent) {
+      return res.status(400).json({ message: 'Pas de payment intent trouvé pour cette session.' });
+    }
+
+    // Effectuer le remboursement via Stripe
     const refund = await stripe.refunds.create({
-      amount: Math.round(deposit * 100), // Montant de la caution en centimes
-      payment_intent: rental.paymentIntentId,
+      amount: Math.round(refundAmount * 100), // Montant en centimes
+      payment_intent: session.payment_intent, // Utiliser le payment intent pour le remboursement
     });
 
-    res.status(200).json({ message: 'Caution remboursée avec succès', refund });
+    res.status(200).json({ message: 'Remboursement effectué avec succès.', refund });
   } catch (error) {
-    console.error('Erreur lors du remboursement de la caution:', error.message);
-    res.status(500).json({ message: 'Erreur lors du remboursement de la caution.', error: error.message });
+    console.error('Erreur lors du remboursement:', error.message);
+    res.status(500).json({ message: 'Erreur lors du remboursement.', error: error.message });
   }
 };
-
 
 
 

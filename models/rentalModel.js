@@ -21,6 +21,10 @@ const rentalSchema = new mongoose.Schema({
   },
   paymentIntentId: {
     type: String,
+    required: false, // Modifier ici pour rendre ce champ facultatif
+  },
+  sessionId: {
+    type: String, // Session Stripe ID
     required: true,
   },
   amount: {
