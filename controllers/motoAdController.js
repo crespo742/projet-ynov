@@ -6,7 +6,12 @@ const sendEmail = require('../utils/sendEmail');
 exports.createMotoAd = async (req, res) => {
     try {
         const { title, description, pricePerDay, brand, model, year, mileage, location } = req.body;
-        const imageUrl = req.file ? req.file.location : null;
+
+        // Collecter les URLs des images (si elles sont téléchargées)
+        const imageUrls = [];
+        if (req.files['image1']) imageUrls.push(req.files['image1'][0].location);
+        if (req.files['image2']) imageUrls.push(req.files['image2'][0].location);
+        if (req.files['image3']) imageUrls.push(req.files['image3'][0].location);
 
         const motoAd = new MotoAd({
             title,
@@ -16,8 +21,8 @@ exports.createMotoAd = async (req, res) => {
             model,
             year,
             mileage,
-            location,  // Localisation ajoutée ici
-            image: imageUrl ? [imageUrl] : [],
+            location,
+            image: imageUrls,  // Stocker toutes les URLs des images
             user: req.user.id,
         });
 

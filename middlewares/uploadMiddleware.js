@@ -13,6 +13,7 @@ const upload = multer({
       cb(null, `moto-ads/${Date.now().toString()}_${file.originalname}`);
     },
   }),
+  limits: { files: 3 } // Limite à 3 fichiers
 });
 
 module.exports = upload;

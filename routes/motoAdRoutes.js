@@ -5,7 +5,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
 // Créer une annonce
-router.post('/create', authMiddleware, upload.single('image'), createMotoAd);
+router.post('/create', authMiddleware, upload.fields([{ name: 'image1' }, { name: 'image2' }, { name: 'image3' }]), createMotoAd);
 
 // Obtenir toutes les annonces
 router.get('/', getMotoAds);
