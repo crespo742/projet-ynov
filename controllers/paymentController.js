@@ -63,8 +63,8 @@ exports.createRentalCheckoutSession = async (req, res) => {
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: 'http://localhost:3002',
-      cancel_url: 'http://localhost:3002',
+      success_url: process.env.NEXT_PUBLIC_FRONT_BASE_URL,
+      cancel_url: process.env.NEXT_PUBLIC_FRONT_BASE_URL,
     });
 
     // Ajouter les dates réservées

@@ -13,7 +13,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3002", // Domaine du frontend
+    origin: process.env.NEXT_PUBLIC_FRONT_BASE_URL, // Domaine du frontend
     methods: ["GET", "POST"],
   },
 });
