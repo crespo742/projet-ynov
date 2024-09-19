@@ -3,6 +3,7 @@ const MotoAd = require('../models/motoAdModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
+const Rating = require('../models/RatingModel');
 
 exports.register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -11,7 +12,7 @@ exports.register = async (req, res) => {
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ msg: 'User already exists' });
-        }        
+        }
 
         user = new User({
             name,
@@ -155,15 +156,85 @@ exports.getUserProfile = async (req, res) => {
 
 exports.getUserProfile = async (req, res) => {
     try {
-      const user = await User.findById(req.user.id);
-      const motoAds = await MotoAd.find({ user: req.user.id });
-  
-      if (!user) {
-        return res.status(404).json({ message: 'Utilisateur non trouvé' });
-      }
-  
-      res.status(200).json({ user, motoAds });
+        const user = await User.findById(req.user.id);
+        const motoAds = await MotoAd.find({ user: req.user.id });
+
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        res.status(200).json({ user, motoAds });
     } catch (error) {
-      res.status(500).json({ message: 'Erreur lors de la récupération du profil utilisateur', error });
+        res.status(500).json({ message: 'Erreur lors de la récupération du profil utilisateur', error });
     }
-  };
+};
+
+// Ajouter une notation
+exports.rateUser = async (req, res) => {
+    const { rating } = req.body;
+    const userId = req.params.id;
+    const raterId = req.user.id; // L'utilisateur qui note
+
+    try {
+        const userToRate = await User.findById(userId);
+
+        if (!userToRate) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Vérifier si l'utilisateur a déjà noté ce profil
+        if (userToRate.ratedBy.includes(raterId)) {
+            return res.status(400).json({ message: 'You have already rated this user.' });
+        }
+
+        // Calculer la nouvelle note moyenne
+        const newRating = ((userToRate.rating * userToRate.ratingCount) + rating) / (userToRate.ratingCount + 1);
+
+        userToRate.rating = newRating;
+        userToRate.ratingCount += 1;
+        userToRate.ratedBy.push(raterId); // Ajouter l'utilisateur qui a noté
+
+        await userToRate.save();
+        res.status(200).json({ message: 'Rating submitted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to submit rating', error });
+    }
+};
+
+
+// Vérifier si un utilisateur a déjà noté un autre utilisateur
+exports.checkIfUserHasRated = async (req, res) => {
+    try {
+        const raterId = req.user.id;
+        const rateeId = req.params.id;
+
+        const existingRating = await Rating.findOne({ rater: raterId, ratee: rateeId });
+        res.status(200).json({ hasRated: !!existingRating });
+    } catch (error) {
+        console.error('Failed to check rating status', error);
+        res.status(500).json({ message: 'Failed to check rating status' });
+    }
+};
+
+// Modifier les informations de profil
+exports.updateUserProfile = async (req, res) => {
+    try {
+        const { id } = req.params; // ID de l'utilisateur passé en paramètre
+        const { email, telephone } = req.body;
+
+        const user = await User.findById(id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        // Mettre à jour les champs
+        user.email = email || user.email;
+        user.telephone = telephone || user.telephone;
+
+        const updatedUser = await user.save();
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur lors de la mise à jour du profil', error });
+    }
+};

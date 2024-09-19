@@ -83,8 +83,8 @@ exports.createRentalCheckoutSession = async (req, res) => {
     });
     await newRental.save();
 
-    // Générer le PDF en mémoire
-    const pdfBuffer = await createPdfContract(motoAd, req.user, startDate, endDate);
+    // Générer le PDF en mémoire avec le prix total
+    const pdfBuffer = await createPdfContract(motoAd, req.user, startDate, endDate, amount);
 
     // Envoyer le PDF par e-mail avec une pièce jointe
     await sendEmailWithAttachment(
@@ -100,6 +100,7 @@ exports.createRentalCheckoutSession = async (req, res) => {
     res.status(500).send({ message: 'Erreur lors de la création de la session de paiement', error: error.message });
   }
 };
+
 
 // Rembourser la caution
 exports.refundDeposit = async (req, res) => {

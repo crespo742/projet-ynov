@@ -15,6 +15,10 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    telephone: {
+        type: String,
+        required: false,
+    },
     isModo: {
         type: Boolean,
         default: false,  // Par défaut, un utilisateur n'est pas modérateur
@@ -23,6 +27,20 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: false,  // Par défaut, un utilisateur n'est pas admin
     },
+    rating: {
+        type: Number,
+        default: 0
+    },
+    ratingCount: {
+        type: Number,
+        default: 0
+    },
+    ratedBy: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
     motoAds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'MotoAd',

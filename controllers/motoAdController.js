@@ -97,7 +97,7 @@ exports.updateMotoAd = async (req, res) => {
             return res.status(403).json({ message: 'Vous n\'êtes pas autorisé à modifier cette annonce' });
         }
 
-        // Mettre à jour les champs
+        // Mettre à jour les champs textuels
         ad.title = title || ad.title;
         ad.description = description || ad.description;
         ad.pricePerDay = pricePerDay || ad.pricePerDay;
@@ -107,12 +107,24 @@ exports.updateMotoAd = async (req, res) => {
         ad.mileage = mileage || ad.mileage;
         ad.location = location || ad.location;
 
+        // Mettre à jour les images si elles sont fournies
+        const imageUrls = [];
+        if (req.files['image1']) imageUrls.push(req.files['image1'][0].location);
+        if (req.files['image2']) imageUrls.push(req.files['image2'][0].location);
+        if (req.files['image3']) imageUrls.push(req.files['image3'][0].location);
+
+        if (imageUrls.length > 0) {
+            ad.image = imageUrls; // Remplacer les anciennes images par les nouvelles
+        }
+
         const updatedAd = await ad.save();
         res.status(200).json(updatedAd);
     } catch (error) {
+        console.error('Error updating ad:', error);
         res.status(500).json({ message: 'Échec de la mise à jour de l\'annonce', error });
     }
 };
+
 
 
 // Supprimer une annonce
@@ -140,6 +152,15 @@ exports.deleteMotoAd = async (req, res) => {
     }
 };
 
+// Obtenir toutes les annonces d'un utilisateur spécifique par ID d'utilisateur
+exports.getUserMotoAdsById = async (req, res) => {
+    try {
+        const userAds = await MotoAd.find({ user: req.params.id });
+        res.status(200).json(userAds);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch ads for this user', error });
+    }
+};
 
 //filtres -->
 
