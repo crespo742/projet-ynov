@@ -26,6 +26,9 @@ router.get('/user', authMiddleware, getUser);
 // Route pour obtenir le profil utilisateur et les annonces publiées
 router.get('/profile', authMiddleware, getUserProfile);
 
+// Route pour obtenir tous les utilisateurs
+router.get('/users', authMiddleware, getAllUsers);
+
 // Route pour obtenir un utilisateur par ID
 router.get('/:id', authMiddleware, getUserById);
 
@@ -37,9 +40,6 @@ router.get('/rating-status/:id', authMiddleware, checkIfUserHasRated);
 
 // Route pour mettre à jour le profil
 router.put('/profile/:id', authMiddleware, updateUserProfile);
-
-// Route pour obtenir tous les utilisateurs
-router.get('/users', authMiddleware, modoMiddleware, getAllUsers);
 
 // Route pour supprimer un utilisateur (accessible uniquement aux modérateurs ou aux administrateurs)
 router.delete('/:id', authMiddleware, modoMiddleware, deleteUserById);
