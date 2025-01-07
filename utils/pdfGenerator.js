@@ -2,7 +2,7 @@ const PDFDocument = require('pdfkit');
 const { format } = require('date-fns');
 
 // Générer un PDF en mémoire
-async function createPdfContract(motoAd, user, startDate, endDate, totalAmount) {
+async function createPdfContract(motoAnnonce, user, startDate, endDate, totalAmount) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument();
     let buffers = [];
@@ -24,10 +24,10 @@ async function createPdfContract(motoAd, user, startDate, endDate, totalAmount) 
     doc.moveDown();
 
     // Détails de la moto
-    doc.fontSize(16).text(`Moto louée : ${motoAd.title}`, { underline: true });
+    doc.fontSize(16).text(`Moto louée : ${motoAnnonce.title}`, { underline: true });
     doc.moveDown();
-    doc.fontSize(14).text(`Prix par jour : ${motoAd.pricePerDay}€`);
-    doc.text(`Caution : ${motoAd.deposit || 100}€`);
+    doc.fontSize(14).text(`Prix par jour : ${motoAnnonce.pricePerDay}€`);
+    doc.text(`Caution : ${motoAnnonce.deposit || 100}€`);
     doc.text(`Période de location : du ${format(new Date(startDate), 'dd/MM/yyyy')} au ${format(new Date(endDate), 'dd/MM/yyyy')}`);
     doc.moveDown();
 

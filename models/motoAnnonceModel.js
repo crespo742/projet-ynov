@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const MotoAdSchema = new mongoose.Schema({
+const MotoAnnonceSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
@@ -54,4 +54,4 @@ const MotoAdSchema = new mongoose.Schema({
   ],
 });
 
-module.exports = mongoose.model('MotoAd', MotoAdSchema);
+module.exports = mongoose.model('MotoAnnonce', MotoAnnonceSchema);

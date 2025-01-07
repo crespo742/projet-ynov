@@ -1,5 +1,5 @@
 const User = require('../models/userModel');
-const MotoAd = require('../models/motoAdModel');
+const MotoAnnonce = require('../models/motoAnnonceModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
@@ -144,7 +144,7 @@ exports.setModerator = async (req, res) => {
 // Récupérer le profil de l'utilisateur connecté, incluant ses annonces de motos
 exports.getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).populate('motoAds', 'title price brand model year');
+        const user = await User.findById(req.user.id).populate('motoAnnonces', 'title price brand model year');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -157,13 +157,13 @@ exports.getUserProfile = async (req, res) => {
 exports.getUserProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        const motoAds = await MotoAd.find({ user: req.user.id });
+        const motoAnnonces = await MotoAnnonce.find({ user: req.user.id });
 
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
-        res.status(200).json({ user, motoAds });
+        res.status(200).json({ user, motoAnnonces });
     } catch (error) {
         res.status(500).json({ message: 'Erreur lors de la récupération du profil utilisateur', error });
     }

@@ -1,6 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const User = require('../models/userModel');
-const MotoAd = require('../models/motoAdModel');
+const MotoAnnonce = require('../models/motoAnnonceModel');
 const Rental = require('../models/rentalModel');
 const mongoose = require('mongoose');
 const { createPdfContract } = require('../utils/pdfGenerator');
@@ -8,21 +8,21 @@ const { sendEmailWithAttachment } = require('../utils/emailUtils');
 
 // Créer une session de paiement pour la location d'une moto
 exports.createRentalCheckoutSession = async (req, res) => {
-  const { motoAdId, startDate, endDate } = req.body;
+  const { motoAnnonceId, startDate, endDate } = req.body;
 
   try {
     // Vérifie si l'ID est valide
-    if (!motoAdId || !mongoose.Types.ObjectId.isValid(motoAdId)) {
+    if (!motoAnnonceId || !mongoose.Types.ObjectId.isValid(motoAnnonceId)) {
       return res.status(400).send({ message: 'ID invalide ou manquant.' });
     }
 
-    const motoAd = await MotoAd.findById(motoAdId);
-    if (!motoAd) {
+    const motoAnnonce = await MotoAnnonce.findById(motoAnnonceId);
+    if (!motoAnnonce) {
       return res.status(404).send({ message: 'Annonce de moto non trouvée.' });
     }
 
     // Vérifier la disponibilité des dates
-    const isDateReserved = motoAd.reservedDates.some((dateRange) => {
+    const isDateReserved = motoAnnonce.reservedDates.some((dateRange) => {
       return (
         (new Date(startDate) <= dateRange.endDate && new Date(startDate) >= dateRange.startDate) ||
         (new Date(endDate) <= dateRange.endDate && new Date(endDate) >= dateRange.startDate) ||
@@ -36,7 +36,7 @@ exports.createRentalCheckoutSession = async (req, res) => {
 
     // Calculer le montant total de la location et de la caution
     const days = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24) + 1;
-    const amount = motoAd.pricePerDay * days;
+    const amount = motoAnnonce.pricePerDay * days;
     const depositAmount = 1000;  // Caution fixée à 1000 €
 
     // Créer une session de paiement Stripe pour la location + caution
@@ -47,8 +47,8 @@ exports.createRentalCheckoutSession = async (req, res) => {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: motoAd.title,
-            description: `Location de ${motoAd.title} pour ${days} jour(s) + caution de ${depositAmount}€`,
+            name: motoAnnonce.title,
+            description: `Location de ${motoAnnonce.title} pour ${days} jour(s) + caution de ${depositAmount}€`,
           },
           unit_amount: Math.round((amount + depositAmount) * 100), // Montant total en centimes
         },
@@ -60,12 +60,12 @@ exports.createRentalCheckoutSession = async (req, res) => {
     });
 
     // Ajouter les dates réservées
-    motoAd.reservedDates.push({ startDate: new Date(startDate), endDate: new Date(endDate) });
-    await motoAd.save();
+    motoAnnonce.reservedDates.push({ startDate: new Date(startDate), endDate: new Date(endDate) });
+    await motoAnnonce.save();
 
     // Sauvegarder la réservation avec sessionId
     const newRental = new Rental({
-      motoAdId,
+      motoAnnonceId,
       userId: req.user._id,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
@@ -76,13 +76,13 @@ exports.createRentalCheckoutSession = async (req, res) => {
     await newRental.save();
 
     // Générer le PDF en mémoire avec le prix total
-    const pdfBuffer = await createPdfContract(motoAd, req.user, startDate, endDate, amount);
+    const pdfBuffer = await createPdfContract(motoAnnonce, req.user, startDate, endDate, amount);
 
     // Envoyer le PDF par e-mail avec une pièce jointe
     await sendEmailWithAttachment(
       req.user.email,
       'Confirmation de location de moto',
-      `Votre location de la moto "${motoAd.title}" a été confirmée pour la période du ${startDate} au ${endDate}.`,
+      `Votre location de la moto "${motoAnnonce.title}" a été confirmée pour la période du ${startDate} au ${endDate}.`,
       pdfBuffer
     );
 

@@ -41,9 +41,9 @@ const UserSchema = new mongoose.Schema({
             ref: 'User'
         }
     ],
-    motoAds: [{
+    motoAnnonces: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'MotoAd',
+        ref: 'MotoAnnonce',
         default: [],  // Initialisation à un tableau vide par défaut
     }],
     stripeCustomerId: {

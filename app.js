@@ -23,7 +23,7 @@ app.use(express.json()); // Middleware pour parser le JSON
 
 // Importation des routes
 const userRoutes = require('./routes/userRoutes');
-const motoAdRoutes = require('./routes/motoAdRoutes');
+const motoAnnonceRoutes = require('./routes/motoAnnonceRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
@@ -31,7 +31,7 @@ const rentalRoutes = require('./routes/rentalRoutes');
 
 // Utilisation des routes
 app.use('/api/users', userRoutes);
-app.use('/api/moto-ads', motoAdRoutes);
+app.use('/api/moto-Annonces', motoAnnonceRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/messages', messageRoutes);

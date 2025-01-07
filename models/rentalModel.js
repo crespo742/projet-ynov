@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const rentalSchema = new mongoose.Schema({
-  motoAdId: {
+  motoAnnonceId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'MotoAd',
+    ref: 'MotoAnnonce',
     required: true,
   },
   userId: {

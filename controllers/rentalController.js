@@ -1,13 +1,13 @@
 const Rental = require('../models/rentalModel');
-const MotoAd = require('../models/motoAdModel');
+const MotoAnnonce = require('../models/motoAnnonceModel');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Récupérer les dates indisponibles pour une moto spécifique
 exports.getUnavailableDates = async (req, res) => {
-  const { motoAdId } = req.params;
+  const { motoAnnonceId } = req.params;
 
   try {
-    const rentals = await Rental.find({ motoAdId });
+    const rentals = await Rental.find({ motoAnnonceId });
 
     const dates = rentals.flatMap(rental => {
       const datesArray = [];
@@ -27,18 +27,18 @@ exports.getUnavailableDates = async (req, res) => {
 
 // Créer une nouvelle réservation
 exports.createRental = async (req, res) => {
-    const { motoAdId, startDate, endDate, deposit, paymentMethodId } = req.body;
+    const { motoAnnonceId, startDate, endDate, deposit, paymentMethodId } = req.body;
     const userId = req.user._id; // Suppose que l'utilisateur est authentifié et son ID est dans req.user
   
     try {
-      const motoAd = await MotoAd.findById(motoAdId);
-      if (!motoAd) {
+      const motoAnnonce = await MotoAnnonce.findById(motoAnnonceId);
+      if (!motoAnnonce) {
         return res.status(404).send({ message: 'Annonce de moto non trouvée.' });
       }
   
       // Calculer le montant total de la location
       const days = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24) + 1;
-      const totalAmount = motoAd.pricePerDay * days;
+      const totalAmount = motoAnnonce.pricePerDay * days;
   
       // Créer une intention de paiement avec Stripe pour la caution
       const paymentIntent = await stripe.paymentIntents.create({
@@ -50,7 +50,7 @@ exports.createRental = async (req, res) => {
       });
   
       const newRental = new Rental({
-        motoAdId,
+        motoAnnonceId,
         userId,
         startDate,
         endDate,
@@ -108,13 +108,13 @@ exports.getRentalsByOwner = async (req, res) => {
   
     try {
       // Trouver toutes les annonces de moto appartenant à ce propriétaire
-      const motoAds = await MotoAd.find({ user: ownerId }); // Trouve toutes les motos de ce propriétaire
+      const motoAnnonces = await MotoAnnonce.find({ user: ownerId }); // Trouve toutes les motos de ce propriétaire
   
       // Extraire les IDs des annonces de moto
-      const motoAdIds = motoAds.map(ad => ad._id);
+      const motoAnnonceIds = motoAnnonces.map(annonce => annonce._id);
   
       // Trouver toutes les réservations associées aux annonces de moto de ce propriétaire
-      const rentals = await Rental.find({ motoAdId: { $in: motoAdIds } }).populate('motoAdId'); // Utilise `populate` pour obtenir les détails de l'annonce de moto
+      const rentals = await Rental.find({ motoAnnonceId: { $in: motoAnnonceIds } }).populate('motoAnnonceId'); // Utilise `populate` pour obtenir les détails de l'annonce de moto
   
       res.status(200).json(rentals);
     } catch (error) {
@@ -129,7 +129,7 @@ exports.getRentalsByUser = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const rentals = await Rental.find({ userId }).populate('motoAdId'); // Utilise `populate` pour obtenir les détails de l'annonce de moto
+    const rentals = await Rental.find({ userId }).populate('motoAnnonceId'); // Utilise `populate` pour obtenir les détails de l'annonce de moto
     res.status(200).json(rentals);
   } catch (error) {
     console.error('Erreur lors de la récupération des réservations de l\'utilisateur:', error);

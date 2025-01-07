@@ -4,7 +4,7 @@ const rentalController = require('../controllers/rentalController');
 const Rental = require('../models/rentalModel'); // Import du modèle Rental
 
 // Route pour récupérer les dates indisponibles pour une moto spécifique
-router.get('/unavailable-dates/:motoAdId', rentalController.getUnavailableDates);
+router.get('/unavailable-dates/:motoAnnonceId', rentalController.getUnavailableDates);
 
 // Route pour créer une nouvelle réservation
 router.post('/create', rentalController.createRental);
